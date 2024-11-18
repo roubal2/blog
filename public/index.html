@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog App</title>
+  <script src="login.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Blogové příspěvky</h1>
+
+  <!-- Formulář pro přihlášení -->
+  <div id="login-container">
+    <h2>Přihlášení</h2>
+    <form id="login-form">
+      <div>
+        <label for="username">Uživatelské jméno:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div>
+        <label for="password">Heslo:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit">Přihlásit se</button>
+    </form>
+  </div>
+
+  <!-- Tlačítko pro odhlášení -->
+  <div id="logout-container" style="display: none;">
+    <button id="logout-btn">Odhlásit se</button>
+  </div>
+
+  <!-- Zobrazování blogových příspěvků -->
+  <div id="posts"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('jwtToken');
+
+      if (token) {
+        // Uživatel je přihlášen, skryjeme přihlašovací formulář a zobrazíme tlačítko pro odhlášení
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('logout-container').style.display = 'block';
+
+        // Načteme blogové příspěvky
+        fetch('/api/blog', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          const postsContainer = document.getElementById('posts');
+          data.forEach(post => {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.innerHTML = `
+              <h3>${post.author}</h3>
+              <p>${post.content}</p>
+              <small>Vytvořeno: ${new Date(post.created_at).toLocaleString()}</small>
+              <hr>
+            `;
+            postsContainer.appendChild(postElement);
+          });
+        })
+        .catch(err => console.error('Chyba při načítání blog postů:', err));
+      }
+
+      // Přihlášení
+      const loginForm = document.getElementById('login-form');
+      loginForm.addEventListener('submit', (event) => {
+        event.preventDefault(); // Zamezíme refresh stránky při odeslání formuláře
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.token) {
+            // Uložení tokenu do localStorage
+            localStorage.setItem('jwtToken', data.token);
+            alert('Přihlášení bylo úspěšné!');
+            window.location.reload(); // Po přihlášení reload stránky
+          } else {
+            alert('Chyba při přihlášení!');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Chyba při připojování k serveru.');
+        });
+      });
+
+      // Odhlášení
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('jwtToken'); // Odstraníme token
+        window.location.reload(); // Reload stránky
+      });
+    });
+  </script>
+</body>
+</html>
