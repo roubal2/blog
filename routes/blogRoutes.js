@@ -45,4 +45,32 @@ router.delete('/:blogId', authenticate, (req, res) => {
   });
 });
 
+// POST - Přidání nového blogového příspěvku
+router.post('/add', authenticate, (req, res) => {
+  const { content } = req.body;
+  const { username, id } = req.user;
+
+  if (!content) {
+    return res.status(400).json({ error: 'Obsah příspěvku je povinný' });
+  }
+
+  const query = 'INSERT INTO blog_posts (content, author, user_id) VALUES (?, ?, ?)';
+  db.execute(query, [content, username, id], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Chyba při přidávání příspěvku' });
+    }
+    res.status(201).json({ message: 'Příspěvek byl úspěšně přidán', postId: results.insertId });
+  });
+});
+
+// GET - Všechny blogové příspěvky
+router.get('/', (req, res) => {
+  db.execute('SELECT * FROM blog_posts', (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Chyba při načítání blog postů' });
+    }
+    res.json(results);
+  });
+});
+
 module.exports = router;

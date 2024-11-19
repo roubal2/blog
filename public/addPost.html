@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Přidat nový příspěvek</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Přidat nový příspěvek</h1>
+  <button id="logout-btn">Odhlásit se</button>
+
+  <!-- Formulář pro přidání příspěvku -->
+  <div id="new-post-container">
+    <textarea id="new-post-content" placeholder="Napište svůj příspěvek..." required></textarea>
+    <button id="post-btn">Post</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('jwtToken');
+
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      const postBtn = document.getElementById('post-btn');
+      postBtn.addEventListener('click', async () => {
+        const content = document.getElementById('new-post-content').value;
+
+        if (!content.trim()) {
+          alert('Příspěvek nemůže být prázdný.');
+          return;
+        }
+
+        const response = await fetch('/api/blog/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ content })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert('Příspěvek byl úspěšně přidán!');
+          window.location.href = '/posts.html'; // Přesměrování zpět na stránku příspěvků
+        } else {
+          alert(result.error || 'Nastala chyba při přidávání příspěvku.');
+        }
+      });
+
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('jwtToken');
+        window.location.href = '/';
+      });
+    });
+  </script>
+</body>
+</html>

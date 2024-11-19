@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Blogové příspěvky</h1>
+    <button id="logout-btn">Odhlásit se</button>
+    <button id="add-post-btn" style="display: none;">Přidat nový příspěvek</button> <!-- Nové tlačítko -->
+    <div id="posts"></div>
+  
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('jwtToken');
+  
+        if (!token) {
+          window.location.href = '/';
+          return;
+        }
+  
+        // Zobrazení tlačítka pro přidání příspěvku po přihlášení
+        document.getElementById('add-post-btn').style.display = 'block';
+  
+        fetch('/api/blog', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+          .then(response => response.json())
+          .then(posts => {
+            const postsContainer = document.getElementById('posts');
+            posts.forEach(post => {
+              const postElement = document.createElement('div');
+              postElement.innerHTML = `
+                <small>Autor: ${post.author}, ID prispevku: ${post.id}</small>
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                <hr>
+              `;
+              postsContainer.appendChild(postElement);
+            });
+          })
+          .catch(err => console.error(err));
+  
+        const logoutBtn = document.getElementById('logout-btn');
+        logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('jwtToken');
+          window.location.href = '/';
+        });
+  
+        // Obsluha tlačítka pro přidání nového příspěvku
+        const addPostBtn = document.getElementById('add-post-btn');
+        addPostBtn.addEventListener('click', () => {
+          window.location.href = '/addPost.html'; // Odkaz na stránku pro přidání nového příspěvku
+        });
+      });
+    </script>
+  </body>
+  
